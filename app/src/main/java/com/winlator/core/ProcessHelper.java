@@ -88,8 +88,23 @@ public abstract class ProcessHelper {
         return pid;
     }
 
-    private static void createDebugThread(final InputStream inputStream) {
-        Executors.newSingleThreadExecutor().execute(() -> {
+    public static java.lang.Process start(String[] command, EnvVars envVars, File workingDir, boolean redirectErrorStream, Callback<Integer> terminationCallback) {
+        java.lang.Process process = null;
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(command).directory(workingDir);
+            if (redirectErrorStream) processBuilder.redirectErrorStream(true);
+
+            Map<String, String> environment = processBuilder.environment();
+            if (envVars != null) for (String name : envVars) environment.put(name, envVars.get(name));
+
+            process = processBuilder.start();
+            if (terminationCallback != null) createWaitForThread(process, terminationCallback);
+        }
+        catch (Exception e) {}
+        return process;
+    }
+
+    private static void createDebugThread(final InputStream inputStream) {        Executors.newSingleThreadExecutor().execute(() -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
                 String line;
                 while ((line = reader.readLine()) != null) {

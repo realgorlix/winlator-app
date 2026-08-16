@@ -462,7 +462,7 @@ public class SettingsFragment extends Fragment {
         }
     }
 
-    public static void resetBox64Version(AppCompatActivity activity) {
+    public static void resetBox64Version(Context activity) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString("box64_version", DefaultVersion.BOX64);

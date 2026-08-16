@@ -87,7 +87,7 @@ public class XComposite extends Extension {
         if (updateMode == UpdateMode.REDIRECT_AUTOMATIC.ordinal()) {
             Drawable parentContent = parent.getContent();
             final Texture texture = parentContent.getTexture();
-            if (texture != null) xServer.getRenderer().xServerView.queueEvent(texture::destroy);
+            if (texture != null && xServer.getRenderer() != null) xServer.getRenderer().xServerView.queueEvent(texture::destroy);
             parentContent.setTexture(window.getContent().getTexture());
         }
     }

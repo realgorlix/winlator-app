@@ -154,6 +154,9 @@ public class ContainerManager {
         dstContainer.setStartupSelection(srcContainer.getStartupSelection());
         dstContainer.setBox64Preset(srcContainer.getBox64Preset());
         dstContainer.setDesktopTheme(srcContainer.getDesktopTheme());
+        dstContainer.setCliPort(srcContainer.getCliPort());
+        dstContainer.setWorkingDir(srcContainer.getWorkingDir());
+        dstContainer.setExecPath(srcContainer.getExecPath());
         dstContainer.saveData();
 
         maxContainerId++;
@@ -230,6 +233,23 @@ public class ContainerManager {
 
     public Container getContainerById(int id) {
         for (Container container : containers) if (container.id == id) return container;
+        return null;
+    }
+
+    public Container getContainerByCliPort(int port) {
+        for (Container container : containers) if (container.getCliPort() == port) return container;
+        return null;
+    }
+
+    public Container ensureContainer(int cliPort) {
+        if (!containers.isEmpty()) return containers.get(0);
+        try {
+            JSONObject data = new JSONObject();
+            data.put("name", "Default");
+            data.put("cliPort", cliPort);
+            return createContainer(data);
+        }
+        catch (JSONException e) {}
         return null;
     }
 

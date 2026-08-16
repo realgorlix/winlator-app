@@ -9,6 +9,7 @@ import android.net.ConnectivityManager;
 import com.winlator.core.FileUtils;
 import com.winlator.core.NetworkHelper;
 import com.winlator.xenvironment.EnvironmentComponent;
+import com.winlator.xenvironment.RootFS;
 
 import java.io.File;
 import java.util.List;
@@ -20,14 +21,12 @@ public class NetworkInfoUpdateComponent extends EnvironmentComponent {
     public void start() {
         Context context = environment.getContext();
         final NetworkHelper networkHelper = new NetworkHelper(context);
-        updateIFAddrsFile(networkHelper.getIFAddresses());
-        updateEtcHostsFile(networkHelper.getIPv4Address());
+        updateFiles(networkHelper);
 
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                updateIFAddrsFile(networkHelper.getIFAddresses());
-                updateEtcHostsFile(networkHelper.getIPv4Address());
+                updateFiles(networkHelper);
             }
         };
 
@@ -44,8 +43,19 @@ public class NetworkInfoUpdateComponent extends EnvironmentComponent {
         }
     }
 
-    private void updateIFAddrsFile(List<NetworkHelper.IFAddress> ifAddresses) {
-        File file = new File(environment.getRootFS().getTmpDir(), "ifaddrs");
+    public static void updateFiles(Context context, RootFS rootFS) {
+        NetworkHelper networkHelper = new NetworkHelper(context);
+        updateIFAddrsFile(rootFS, networkHelper.getIFAddresses());
+        updateEtcHostsFile(rootFS, networkHelper.getIPv4Address());
+    }
+
+    private void updateFiles(NetworkHelper networkHelper) {
+        updateIFAddrsFile(environment.getRootFS(), networkHelper.getIFAddresses());
+        updateEtcHostsFile(environment.getRootFS(), networkHelper.getIPv4Address());
+    }
+
+    private static void updateIFAddrsFile(RootFS rootFS, List<NetworkHelper.IFAddress> ifAddresses) {
+        File file = new File(rootFS.getTmpDir(), "ifaddrs");
 
         String content = "";
         if (!ifAddresses.isEmpty()) {
@@ -58,9 +68,18 @@ public class NetworkInfoUpdateComponent extends EnvironmentComponent {
         FileUtils.writeString(file, content);
     }
 
-    private void updateEtcHostsFile(String ipAddress) {
+    private static void updateEtcHostsFile(RootFS rootFS, String ipAddress) {
         String ip = ipAddress != null ? ipAddress : "127.0.0.1";
-        File file = new File(environment.getRootFS().getRootDir(), "etc/hosts");
-        FileUtils.writeString(file, ip+"\tlocalhost\n");
+        String hostname = null;
+        try {
+            byte[] data = FileUtils.read(new File("/proc/sys/kernel/hostname"));
+            if (data != null) hostname = new String(data, java.nio.charset.StandardCharsets.UTF_8).trim();
+        }
+        catch (Exception ignored) {}
+
+        String content = "127.0.0.1\tlocalhost\n"+ip+"\tlocalhost\n";
+        if (hostname != null && !hostname.isEmpty()) content += "127.0.0.1\t"+hostname+"\n"+ip+"\t"+hostname+"\n";
+        File file = new File(rootFS.getRootDir(), "etc/hosts");
+        FileUtils.writeString(file, content);
     }
 }

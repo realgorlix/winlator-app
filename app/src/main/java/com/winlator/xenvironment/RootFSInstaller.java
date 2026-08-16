@@ -10,6 +10,7 @@ import com.winlator.SettingsFragment;
 import com.winlator.container.Container;
 import com.winlator.container.ContainerManager;
 import com.winlator.core.AppUtils;
+import com.winlator.core.Callback;
 import com.winlator.core.DownloadProgressDialog;
 import com.winlator.core.FileUtils;
 import com.winlator.core.PreloaderDialog;
@@ -80,6 +81,32 @@ public abstract class RootFSInstaller {
     public static void installIfNeeded(final MainActivity activity) {
         RootFS rootFS = RootFS.find(activity);
         if (!rootFS.isValid() || rootFS.getVersion() < LATEST_VERSION) install(activity);
+    }
+
+    public static void installIfNeeded(Context context, final Callback<Boolean> callback) {
+        RootFS rootFS = RootFS.find(context);
+        if (!rootFS.isValid() || rootFS.getVersion() < LATEST_VERSION) install(context, callback);
+        else if (callback != null) callback.call(true);
+    }
+
+    public static void install(final Context context, final Callback<Boolean> callback) {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            boolean success = installSync(context);
+            if (callback != null) callback.call(success);
+        });
+    }
+
+    public static boolean installSync(final Context context) {
+        SettingsFragment.resetBox64Version(context);
+        RootFS rootFS = RootFS.find(context);
+        final File rootDir = rootFS.getRootDir();
+        clearRootDir(rootDir);
+        boolean success = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, FILENAME, rootDir);
+        if (success) {
+            rootFS.createRFSVersionFile(LATEST_VERSION);
+            resetContainerRFSVersions(context);
+        }
+        return success;
     }
 
     private static void clearOptDir(File optDir) {

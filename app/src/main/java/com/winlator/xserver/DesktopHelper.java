@@ -48,12 +48,14 @@ public abstract class DesktopHelper {
             if (window.isSurface()) {
                 ArrayList<Window> dialogWindows = xServer.windowManager.findDialogWindows(window.id);
                 if (!dialogWindows.isEmpty()) {
-                    for (Window dialogWindow : dialogWindows) winHandler.bringToFront(dialogWindow.getClassName(), dialogWindow.getHandle());
+                    for (Window dialogWindow : dialogWindows) {
+                        if (winHandler != null) winHandler.bringToFront(dialogWindow.getClassName(), dialogWindow.getHandle());
+                    }
                 }
-                else winHandler.bringToFront(window.getClassName(), window.getHandle());
+                else if (winHandler != null) winHandler.bringToFront(window.getClassName(), window.getHandle());
             }
         }
-        else if (window.isDialogBox()) {
+        else if (window.isDialogBox() && winHandler != null) {
             winHandler.bringToFront(window.getClassName(), window.getHandle());
         }
     }

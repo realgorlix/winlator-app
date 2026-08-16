@@ -44,6 +44,10 @@ public class XServer {
     private final EnumMap<Lockable, ReentrantLock> locks = new EnumMap<>(Lockable.class);
     private boolean relativeMouseMovement = false;
 
+    public XServer(ScreenInfo screenInfo) {
+        this(null, screenInfo);
+    }
+
     public XServer(XServerDisplayActivity activity, ScreenInfo screenInfo) {
         this.activity = activity;
         this.screenInfo = screenInfo;
@@ -201,6 +205,7 @@ public class XServer {
     }
 
     public void debugPrint(String line) {
+        if (activity == null) return;
         DebugDialog debugDialog = activity.getDebugDialog();
         if (debugDialog != null) debugDialog.call("xserver:"+line);
     }

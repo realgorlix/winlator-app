@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -48,6 +50,15 @@
             android:theme="@style/AppThemeDark"
             android:exported="false"
             android:screenOrientation="sensor" />
+
+        <service
+            android:name="com.winlator.cli.CliService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Runs Windows applications headlessly and bridges stdio over localhost TCP for terminal clients" />
+        </service>
 
         <provider
             android:name="androidx.core.content.FileProvider"

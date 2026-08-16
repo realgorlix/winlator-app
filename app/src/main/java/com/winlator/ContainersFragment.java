@@ -1,6 +1,5 @@
 package com.winlator;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -26,10 +25,12 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.winlator.cli.CliService;
 import com.winlator.container.Container;
 import com.winlator.container.ContainerManager;
 import com.winlator.contentdialog.ContentDialog;
 import com.winlator.contentdialog.StorageInfoDialog;
+import com.winlator.core.AppUtils;
 import com.winlator.core.PreloaderDialog;
 import com.winlator.xenvironment.RootFS;
 
@@ -180,10 +181,15 @@ public class ContainersFragment extends Fragment {
         }
 
         private void runContainer(Container container) {
-            Activity activity = getActivity();
-            Intent intent = new Intent(activity, XServerDisplayActivity.class);
+            MainActivity activity = (MainActivity)getActivity();
+            String execPath = container.getExecPath();
+            Intent intent = new Intent(activity, CliService.class);
             intent.putExtra("container_id", container.id);
-            activity.startActivity(intent);
+            intent.putExtra("port", container.getCliPort());
+            intent.putExtra("exec_path", execPath.isEmpty() ? "cmd" : execPath);
+            intent.putExtra("accept_timeout", 0);
+            ContextCompat.startForegroundService(activity, intent);
+            AppUtils.showToast(activity, activity.getString(R.string.cli_started_toast, container.getCliPort()));
         }
     }
 }

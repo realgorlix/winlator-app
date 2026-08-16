@@ -28,6 +28,7 @@ public class Container {
     public static final byte STARTUP_SELECTION_ESSENTIAL = 1;
     public static final byte STARTUP_SELECTION_AGGRESSIVE = 2;
     public static final byte MAX_DRIVE_LETTERS = 8;
+    public static final int CLI_PORT_DEFAULT = 7654;
     public final int id;
     private String name;
     private String screenSize = DEFAULT_SCREEN_SIZE;
@@ -47,6 +48,9 @@ public class Container {
     private String cpuListWoW64;
     private String desktopTheme = WineThemeManager.DEFAULT_DESKTOP_THEME;
     private String box64Preset = Box64Preset.DEFAULT;
+    private int cliPort = CLI_PORT_DEFAULT;
+    private String workingDir = "";
+    private String execPath = "";
     private File rootDir;
     private JSONObject extraData;
 
@@ -191,6 +195,30 @@ public class Container {
         this.box64Preset = box64Preset;
     }
 
+    public int getCliPort() {
+        return cliPort;
+    }
+
+    public void setCliPort(int cliPort) {
+        this.cliPort = cliPort > 0 && cliPort < 65536 ? cliPort : CLI_PORT_DEFAULT;
+    }
+
+    public String getWorkingDir() {
+        return workingDir;
+    }
+
+    public void setWorkingDir(String workingDir) {
+        this.workingDir = workingDir != null ? workingDir : "";
+    }
+
+    public String getExecPath() {
+        return execPath;
+    }
+
+    public void setExecPath(String execPath) {
+        this.execPath = execPath != null ? execPath : "";
+    }
+
     public File getRootDir() {
         return rootDir;
     }
@@ -303,6 +331,9 @@ public class Container {
             data.put("startupSelection", startupSelection);
             data.put("box64Preset", box64Preset);
             data.put("desktopTheme", desktopTheme);
+            data.put("cliPort", cliPort);
+            if (!workingDir.isEmpty()) data.put("workingDir", workingDir);
+            if (!execPath.isEmpty()) data.put("execPath", execPath);
             data.put("extraData", extraData);
 
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
@@ -384,6 +415,15 @@ public class Container {
                     break;
                 case "desktopTheme" :
                     setDesktopTheme(data.getString(key));
+                    break;
+                case "cliPort" :
+                    setCliPort(data.getInt(key));
+                    break;
+                case "workingDir" :
+                    setWorkingDir(data.getString(key));
+                    break;
+                case "execPath" :
+                    setExecPath(data.getString(key));
                     break;
             }
         }
