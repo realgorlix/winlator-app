@@ -350,15 +350,20 @@
     <string name="default_no_override">Default (No override)</string>
     <string name="executable_path">Default Executable Path</string>
     <string name="working_dir">Working Dir</string>
-    <string name="cli_port">CLI Port</string>
+    <string name="enable_debug">Enable Debug</string>
+    <string name="status_running">Running</string>
+    <string name="status_stopped">Stopped</string>
+    <string name="status_crashed">Crashed</string>
+    <string name="status_crashed_with_code">Crashed (exit code %1$d)</string>
+    <string name="open_console">Open Console</string>
+    <string name="type_a_command">Type a command…</string>
+    <string name="container_already_running">A container is already running</string>
     <string name="cli_notification_channel" translatable="false">Winlator CLI</string>
     <string name="cli_notification_title" translatable="false">Winlator CLI</string>
     <string name="cli_status_starting">Starting…</string>
     <string name="cli_status_installing">Installing system files…</string>
     <string name="cli_status_preparing">Preparing container…</string>
-    <string name="cli_status_waiting">Waiting for connection on port %1$d…</string>
     <string name="cli_status_running">Running: %1$s</string>
+    <string name="cli_status_crashed">Crashed (exit code %1$d)</string>
     <string name="cli_error_no_exec_path">No executable path given</string>
-    <string name="cli_error_port_in_use">Port %1$d is not available</string>
-    <string name="cli_started_toast">Container started — connect from Termux: nc 127.0.0.1 %1$d</string>
 </resources>

@@ -40,8 +40,6 @@ public class CliProcess {
     }
 
     public void close() {
-        try { inputStream.close(); } catch (IOException e) {}
-        try { outputStream.close(); } catch (IOException e) {}
         try { masterPfd.close(); } catch (IOException e) {}
     }
 }

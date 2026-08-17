@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.winlator.cli.CliService;
+import com.winlator.cli.ContainerRuntime;
 import com.winlator.container.Container;
 import com.winlator.container.ContainerManager;
 import com.winlator.contentdialog.ContentDialog;
@@ -42,6 +43,17 @@ public class ContainersFragment extends Fragment {
     private TextView emptyTextView;
     private ContainerManager manager;
     private PreloaderDialog preloaderDialog;
+    private final ContainerRuntime.Listener runtimeListener = new ContainerRuntime.Listener() {
+        @Override
+        public void onLog(String line) {}
+
+        @Override
+        public void onStatusChanged(ContainerRuntime.Status status, int exitCode) {
+            if (getActivity() != null) getActivity().runOnUiThread(() -> {
+                if (recyclerView != null && recyclerView.getAdapter() != null) recyclerView.getAdapter().notifyDataSetChanged();
+            });
+        }
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,6 +68,18 @@ public class ContainersFragment extends Fragment {
         manager = new ContainerManager(getContext());
         loadContainersList();
         ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.containers);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        ContainerRuntime.getInstance().addListener(runtimeListener);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        ContainerRuntime.getInstance().removeListener(runtimeListener);
     }
 
     @Nullable
@@ -103,15 +127,19 @@ public class ContainersFragment extends Fragment {
 
         private class ViewHolder extends RecyclerView.ViewHolder {
             private final ImageView runButton;
+            private final ImageView stopButton;
             private final ImageView menuButton;
             private final ImageView imageView;
             private final TextView title;
+            private final TextView statusView;
 
             private ViewHolder(View view) {
                 super(view);
                 this.imageView = view.findViewById(R.id.ImageView);
                 this.title = view.findViewById(R.id.TVTitle);
+                this.statusView = view.findViewById(R.id.TVStatus);
                 this.runButton = view.findViewById(R.id.BTRun);
+                this.stopButton = view.findViewById(R.id.BTStop);
                 this.menuButton = view.findViewById(R.id.BTMenu);
             }
         }
@@ -130,8 +158,40 @@ public class ContainersFragment extends Fragment {
             final Container item = data.get(position);
             holder.imageView.setImageResource(R.drawable.icon_container);
             holder.title.setText(item.getName());
+
+            ContainerRuntime runtime = ContainerRuntime.getInstance();
+            ContainerRuntime.Status status = runtime.isRunningContainer(item.id) ? ContainerRuntime.Status.RUNNING : (runtime.getContainer() != null && runtime.getContainer().id == item.id ? runtime.getStatus() : ContainerRuntime.Status.STOPPED);
+            updateStatusView(holder, status);
+
             holder.runButton.setOnClickListener((view) -> runContainer(item));
+            holder.stopButton.setOnClickListener((view) -> stopContainer(item));
             holder.menuButton.setOnClickListener((view) -> showListItemMenu(view, item));
+        }
+
+        private void updateStatusView(ViewHolder holder, ContainerRuntime.Status status) {
+            Context context = holder.statusView.getContext();
+            int textResId;
+            int color;
+            switch (status) {
+                case RUNNING:
+                    textResId = R.string.status_running;
+                    color = 0xff4caf50;
+                    break;
+                case CRASHED:
+                    textResId = R.string.status_crashed;
+                    color = 0xfff44336;
+                    break;
+                default:
+                    textResId = R.string.status_stopped;
+                    color = AppUtils.getThemeColor(context, R.attr.colorSecondaryText);
+                    break;
+            }
+            holder.statusView.setText(textResId);
+            holder.statusView.setTextColor(color);
+
+            boolean running = status == ContainerRuntime.Status.RUNNING;
+            holder.stopButton.setVisibility(running ? View.VISIBLE : View.GONE);
+            holder.runButton.setImageResource(running ? R.drawable.icon_open : R.drawable.icon_run);
         }
 
         @Override
@@ -182,14 +242,28 @@ public class ContainersFragment extends Fragment {
 
         private void runContainer(Container container) {
             MainActivity activity = (MainActivity)getActivity();
+            ContainerRuntime runtime = ContainerRuntime.getInstance();
+
+            if (runtime.isRunningContainer(container.id)) {
+                activity.showFragment(new ContainerConsoleFragment(container.id));
+                return;
+            }
+
+            if (runtime.isRunning()) {
+                AppUtils.showToast(activity, R.string.container_already_running);
+                return;
+            }
+
             String execPath = container.getExecPath();
             Intent intent = new Intent(activity, CliService.class);
             intent.putExtra("container_id", container.id);
-            intent.putExtra("port", container.getCliPort());
             intent.putExtra("exec_path", execPath.isEmpty() ? "cmd" : execPath);
-            intent.putExtra("accept_timeout", 0);
             ContextCompat.startForegroundService(activity, intent);
-            AppUtils.showToast(activity, activity.getString(R.string.cli_started_toast, container.getCliPort()));
+            activity.showFragment(new ContainerConsoleFragment(container.id));
+        }
+
+        private void stopContainer(Container container) {
+            ContainerRuntime.getInstance().stop();
         }
     }
 }

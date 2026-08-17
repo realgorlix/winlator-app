@@ -133,6 +133,12 @@ public class ContainerDetailFragment extends Fragment {
         final EditText etWorkingDir = view.findViewById(R.id.ETWorkingDir);
         etWorkingDir.setText(isEditMode() ? container.getWorkingDir() : "");
 
+        final EditText etArguments = view.findViewById(R.id.ETArguments);
+        etArguments.setText(isEditMode() ? container.getArguments() : "");
+
+        final android.widget.CheckBox cbDebug = view.findViewById(R.id.CBEnableDebug);
+        cbDebug.setChecked(isEditMode() && container.isDebugEnabled());
+
         view.findViewById(R.id.BTBrowseExecPath).setOnClickListener((v) -> {
             openExecPathCallback = etExecPath::setText;
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -147,9 +153,6 @@ public class ContainerDetailFragment extends Fragment {
             intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.fromFile(Environment.getExternalStorageDirectory()));
             startActivityForResult(intent, OPEN_WORKING_DIR_REQUEST_CODE);
         });
-
-        final EditText etCliPort = view.findViewById(R.id.ETCliPort);
-        etCliPort.setText(String.valueOf(isEditMode() ? container.getCliPort() : Container.CLI_PORT_DEFAULT));
 
         final ArrayList<WineInfo> wineInfos = WineInstaller.getInstalledWineInfos(context);
         final Spinner sWineVersion = view.findViewById(R.id.SWineVersion);
@@ -189,7 +192,8 @@ public class ContainerDetailFragment extends Fragment {
                 String box64Preset = Box64PresetManager.getSpinnerSelectedId(sBox64Preset);
                 String execPath = etExecPath.getText().toString().trim();
                 String workingDir = etWorkingDir.getText().toString().trim();
-                int cliPort = parsePort(etCliPort.getText().toString().trim());
+                String arguments = etArguments.getText().toString().trim();
+                boolean debug = cbDebug.isChecked();
 
                 if (isEditMode()) {
                     container.setName(name);
@@ -201,7 +205,8 @@ public class ContainerDetailFragment extends Fragment {
                     container.setBox64Preset(box64Preset);
                     container.setExecPath(execPath);
                     container.setWorkingDir(workingDir);
-                    container.setCliPort(cliPort);
+                    container.setArguments(arguments);
+                    container.setDebugEnabled(debug);
                     container.saveData();
 
                     saveWinVersion();
@@ -219,7 +224,8 @@ public class ContainerDetailFragment extends Fragment {
                     data.put("box64Preset", box64Preset);
                     data.put("execPath", execPath);
                     data.put("workingDir", workingDir);
-                    data.put("cliPort", cliPort);
+                    data.put("arguments", arguments);
+                    data.put("debug", debug);
 
                     if (wineInfos.size() > 1) {
                         data.put("wineVersion", wineInfos.get(sWineVersion.getSelectedItemPosition()).identifier());
@@ -242,15 +248,6 @@ public class ContainerDetailFragment extends Fragment {
     }
 
     private Spinner sWinVersion;
-
-    private int parsePort(String value) {
-        try {
-            return Integer.parseInt(value);
-        }
-        catch (NumberFormatException e) {
-            return Container.CLI_PORT_DEFAULT;
-        }
-    }
 
     private void saveWinVersion() {
         int oldPosition = (byte)sWinVersion.getTag();

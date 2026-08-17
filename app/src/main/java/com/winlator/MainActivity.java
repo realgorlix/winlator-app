@@ -86,6 +86,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (containerId > 0 && startPath != null) {
                 showFragment(new ContainerFileManagerFragment(containerId, startPath));
             }
+
+            int openConsoleContainerId = intent.getIntExtra("open_console_container_id", 0);
+            if (openConsoleContainerId > 0) {
+                showFragment(new ContainerConsoleFragment(openConsoleContainerId));
+            }
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        int openConsoleContainerId = intent.getIntExtra("open_console_container_id", 0);
+        if (openConsoleContainerId > 0) {
+            showFragment(new ContainerConsoleFragment(openConsoleContainerId));
         }
     }
 

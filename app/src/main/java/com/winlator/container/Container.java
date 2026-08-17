@@ -51,6 +51,8 @@ public class Container {
     private int cliPort = CLI_PORT_DEFAULT;
     private String workingDir = "";
     private String execPath = "";
+    private String arguments = "";
+    private boolean debug = false;
     private File rootDir;
     private JSONObject extraData;
 
@@ -219,6 +221,22 @@ public class Container {
         this.execPath = execPath != null ? execPath : "";
     }
 
+    public String getArguments() {
+        return arguments;
+    }
+
+    public void setArguments(String arguments) {
+        this.arguments = arguments != null ? arguments : "";
+    }
+
+    public boolean isDebugEnabled() {
+        return debug;
+    }
+
+    public void setDebugEnabled(boolean debug) {
+        this.debug = debug;
+    }
+
     public File getRootDir() {
         return rootDir;
     }
@@ -334,6 +352,8 @@ public class Container {
             data.put("cliPort", cliPort);
             if (!workingDir.isEmpty()) data.put("workingDir", workingDir);
             if (!execPath.isEmpty()) data.put("execPath", execPath);
+            if (!arguments.isEmpty()) data.put("arguments", arguments);
+            if (debug) data.put("debug", true);
             data.put("extraData", extraData);
 
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
@@ -424,6 +444,12 @@ public class Container {
                     break;
                 case "execPath" :
                     setExecPath(data.getString(key));
+                    break;
+                case "arguments" :
+                    setArguments(data.getString(key));
+                    break;
+                case "debug" :
+                    setDebugEnabled(data.getBoolean(key));
                     break;
             }
         }

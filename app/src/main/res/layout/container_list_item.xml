@@ -17,14 +17,26 @@
         android:layout_marginBottom="8dp"
         app:tint="?attr/colorPrimaryVariant" />
 
-    <TextView
-        android:id="@+id/TVTitle"
+    <LinearLayout
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:gravity="center_vertical"
-        android:ellipsize="end"
-        android:maxLines="1" />
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/TVTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/TVStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:text="@string/status_stopped" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -34,13 +46,17 @@
         <ImageView
             style="@style/LeftSideButton"
             android:id="@+id/BTRun"
-            android:layout_marginRight="2dp"
             android:src="@drawable/icon_run" />
+
+        <ImageView
+            style="@style/MiddleSideButton"
+            android:id="@+id/BTStop"
+            android:src="@drawable/icon_power"
+            android:visibility="gone" />
 
         <ImageView
             style="@style/RightSideButton"
             android:id="@+id/BTMenu"
-            android:layout_marginLeft="2dp"
             android:src="@drawable/icon_list_item_menu" />
     </LinearLayout>
 </LinearLayout>

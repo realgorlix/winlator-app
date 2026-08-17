@@ -27,8 +27,8 @@ public abstract class CliRunner {
         EnvVars envVars = GuestLauncher.buildBaseEnvVars(context, rootFS, preset, true);
         envVars.put("DISPLAY", ":0");
 
-        envVars.put("BOX64_SHOWSEGV", "1");
         if (debug) {
+            envVars.put("BOX64_SHOWSEGV", "1");
             envVars.put("BOX64_NOBANNER", "0");
             envVars.put("BOX64_LOG", "1");
             envVars.put("BOX64_DYNAREC_MISSING", "1");
@@ -51,6 +51,7 @@ public abstract class CliRunner {
         command.add(GuestLauncher.box64Command(rootFS));
         command.add("wine");
         command.add(execPath);
+        if (container != null) command.addAll(parseArguments(container.getArguments()));
         if (args != null) command.addAll(Arrays.asList(args));
 
         int masterFd = CliPty.openPty(CliPty.DEFAULT_COLS, CliPty.DEFAULT_ROWS);
@@ -83,6 +84,29 @@ public abstract class CliRunner {
             if (execDir != null && execDir.isDirectory()) return execDir;
         }
         return rootDir;
+    }
+
+    private static ArrayList<String> parseArguments(String arguments) {
+        ArrayList<String> result = new ArrayList<>();
+        if (arguments == null || arguments.isEmpty()) return result;
+
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < arguments.length(); i++) {
+            char c = arguments.charAt(i);
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            }
+            else if (c == ' ' && !inQuotes) {
+                if (current.length() > 0) {
+                    result.add(current.toString());
+                    current.setLength(0);
+                }
+            }
+            else current.append(c);
+        }
+        if (current.length() > 0) result.add(current.toString());
+        return result;
     }
 
     public static void prepareContainer(Context context, Container container) {

@@ -53,11 +53,11 @@
 
         <service
             android:name="com.winlator.cli.CliService"
-            android:exported="true"
+            android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Runs Windows applications headlessly and bridges stdio over localhost TCP for terminal clients" />
+                android:value="Runs Windows applications headlessly and exposes an in-app console for logs and commands" />
         </service>
 
         <provider

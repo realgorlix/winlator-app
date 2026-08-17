@@ -157,6 +157,8 @@ public class ContainerManager {
         dstContainer.setCliPort(srcContainer.getCliPort());
         dstContainer.setWorkingDir(srcContainer.getWorkingDir());
         dstContainer.setExecPath(srcContainer.getExecPath());
+        dstContainer.setArguments(srcContainer.getArguments());
+        dstContainer.setDebugEnabled(srcContainer.isDebugEnabled());
         dstContainer.saveData();
 
         maxContainerId++;
