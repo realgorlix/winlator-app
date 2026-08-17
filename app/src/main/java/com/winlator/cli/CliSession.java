@@ -41,7 +41,7 @@ public class CliSession {
         }
     }
 
-    public void start(java.lang.Process process, Socket clientSocket, Callback<Integer> onExit) {
+    public void start(CliProcess cliProcess, Socket clientSocket, Callback<Integer> onExit) {
         this.socket = clientSocket;
         running = true;
 
@@ -56,8 +56,8 @@ public class CliSession {
             return;
         }
 
-        final OutputStream processIn = process.getOutputStream();
-        final InputStream processOut = process.getInputStream();
+        final OutputStream processIn = cliProcess.getOutputStream();
+        final InputStream processOut = cliProcess.getInputStream();
 
         new Thread(() -> {
             byte[] buffer = new byte[4096];
@@ -86,13 +86,14 @@ public class CliSession {
 
         new Thread(() -> {
             try {
-                int exitCode = process.waitFor();
+                int exitCode = cliProcess.waitFor();
                 running = false;
                 try {
                     clientOut.write(("\n[winlator-cli] process exited with code "+exitCode+"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
                     clientOut.flush();
                 }
                 catch (IOException e) {}
+                cliProcess.close();
                 close();
                 if (onExit != null) onExit.call(exitCode);
             }

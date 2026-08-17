@@ -104,6 +104,24 @@ public abstract class ProcessHelper {
         return process;
     }
 
+    public static java.lang.Process startWithPty(String[] command, EnvVars envVars, File workingDir, String slavePath, Callback<Integer> terminationCallback) {
+        java.lang.Process process = null;
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(command).directory(workingDir);
+            processBuilder.redirectInput(ProcessBuilder.Redirect.from(new File(slavePath)));
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.to(new File(slavePath)));
+            processBuilder.redirectErrorStream(true);
+
+            Map<String, String> environment = processBuilder.environment();
+            if (envVars != null) for (String name : envVars) environment.put(name, envVars.get(name));
+
+            process = processBuilder.start();
+            if (terminationCallback != null) createWaitForThread(process, terminationCallback);
+        }
+        catch (Exception e) {}
+        return process;
+    }
+
     private static void createDebugThread(final InputStream inputStream) {        Executors.newSingleThreadExecutor().execute(() -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
                 String line;

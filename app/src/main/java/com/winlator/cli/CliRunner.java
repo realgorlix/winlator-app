@@ -1,6 +1,7 @@
 package com.winlator.cli;
 
 import android.content.Context;
+import android.os.ParcelFileDescriptor;
 
 import com.winlator.container.Container;
 import com.winlator.core.Callback;
@@ -8,6 +9,7 @@ import com.winlator.core.EnvVars;
 import com.winlator.core.GuestLauncher;
 import com.winlator.core.ProcessHelper;
 import com.winlator.core.WineUtils;
+import com.winlator.xconnector.XConnectorEpoll;
 import com.winlator.xenvironment.RootFS;
 
 import java.io.File;
@@ -15,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public abstract class CliRunner {
-    public static java.lang.Process run(Context context, Container container, String execPath, String[] args, boolean debug, Callback<Integer> terminationCallback) {
+    public static CliProcess run(Context context, Container container, String execPath, String[] args, boolean debug, Callback<Integer> terminationCallback) {
         RootFS rootFS = RootFS.find(context);
         GuestLauncher.extractBox64File(context);
         GuestLauncher.copyDefaultBox64RCFile(context, rootFS);
@@ -51,7 +53,23 @@ public abstract class CliRunner {
         command.add(execPath);
         if (args != null) command.addAll(Arrays.asList(args));
 
-        return ProcessHelper.start(command.toArray(new String[0]), envVars, workingDir, true, terminationCallback);
+        int masterFd = CliPty.openPty(CliPty.DEFAULT_COLS, CliPty.DEFAULT_ROWS);
+        if (masterFd < 0) return null;
+
+        String slavePath = CliPty.getSlavePath(masterFd);
+        if (slavePath == null) {
+            XConnectorEpoll.closeFd(masterFd);
+            return null;
+        }
+
+        java.lang.Process process = ProcessHelper.startWithPty(command.toArray(new String[0]), envVars, workingDir, slavePath, terminationCallback);
+        if (process == null) {
+            XConnectorEpoll.closeFd(masterFd);
+            return null;
+        }
+
+        ParcelFileDescriptor masterPfd = ParcelFileDescriptor.adoptFd(masterFd);
+        return new CliProcess(process, masterFd, masterPfd);
     }
 
     public static File resolveWorkingDir(Context context, Container container, String execPath) {

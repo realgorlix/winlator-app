@@ -144,8 +144,8 @@ public class CliService extends Service {
 
             sendToClient(client, "[winlator-cli] starting "+execPath+"\n");
             updateNotification(getString(R.string.cli_status_running, execPath));
-            java.lang.Process process = CliRunner.run(this, container, execPath, args, debug, null);
-            if (process == null) {
+            CliProcess process = CliRunner.run(this, container, execPath, args, debug, null);
+            if (process == null || process.process == null) {
                 sendToClient(client, "[winlator-cli] error: failed to start process\n");
                 session.close();
                 finish();

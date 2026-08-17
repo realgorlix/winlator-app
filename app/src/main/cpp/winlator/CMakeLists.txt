@@ -16,6 +16,7 @@ add_library(winlator SHARED
             src/xoutput_stream.c
             src/arrays.c
             src/ring_buffer.c
+            src/cli_pty.c
             src/wine_registry_editor.c)
 
 target_link_libraries(winlator
