@@ -21,6 +21,34 @@ Java_com_winlator_cli_CliPty_openPty(JNIEnv* env, jclass clazz, jint cols, jint 
         return -1;
     }
 
+    char* slaveName = ptsname(master);
+    if (!slaveName) {
+        close(master);
+        return -1;
+    }
+
+    /*
+     * Configure the line discipline before the child process attaches to the
+     * slave. Put the pty in raw mode so that bytes written to the master reach
+     * Wine's conhost --unix exactly as sent. This is important for input: a
+     * carriage return (0x0D) is what conhost maps to VK_RETURN (Enter), while a
+     * line feed (0x0A) becomes Ctrl+J. Leaving ICANON/ICRNL enabled would turn
+     * a CR into NL and break console command input.
+     */
+    int slave = open(slaveName, O_RDWR | O_NOCTTY);
+    if (slave >= 0) {
+        struct termios tio;
+        if (tcgetattr(slave, &tio) == 0) {
+            tio.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+            tio.c_oflag &= ~OPOST;
+            tio.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+            tio.c_cflag &= ~(CSIZE | PARENB);
+            tio.c_cflag |= CS8;
+            tcsetattr(slave, TCSANOW, &tio);
+        }
+        close(slave);
+    }
+
     if (cols > 0 || rows > 0) {
         struct winsize ws;
         memset(&ws, 0, sizeof(ws));

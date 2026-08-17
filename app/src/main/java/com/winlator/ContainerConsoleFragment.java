@@ -1,9 +1,11 @@
 package com.winlator;
 
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
@@ -29,7 +31,6 @@ public class ContainerConsoleFragment extends Fragment {
     private ScrollView scrollView;
     private EditText commandView;
     private ImageButton sendButton;
-    private ImageButton stopButton;
     private final ArrayList<String> lines = new ArrayList<>();
     private final ContainerRuntime.Listener runtimeListener = new ContainerRuntime.Listener() {
         @Override
@@ -63,14 +64,15 @@ public class ContainerConsoleFragment extends Fragment {
         scrollView = view.findViewById(R.id.ScrollView);
         commandView = view.findViewById(R.id.ETCommand);
         sendButton = view.findViewById(R.id.BTSend);
-        stopButton = view.findViewById(R.id.BTStop);
 
         sendButton.setOnClickListener((v) -> sendCommand());
         commandView.setOnEditorActionListener((v, actionId, event) -> {
-            sendCommand();
-            return true;
+            if (actionId == EditorInfo.IME_ACTION_SEND || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                sendCommand();
+                return true;
+            }
+            return false;
         });
-        stopButton.setOnClickListener((v) -> ContainerRuntime.getInstance().stop());
 
         Container activeContainer = new ContainerManager(requireContext()).getContainerById(containerId);
         if (activeContainer != null) ((AppCompatActivity)requireActivity()).getSupportActionBar().setTitle(activeContainer.getName());
@@ -138,6 +140,5 @@ public class ContainerConsoleFragment extends Fragment {
         boolean running = status == ContainerRuntime.Status.RUNNING;
         commandView.setEnabled(running);
         sendButton.setEnabled(running);
-        stopButton.setEnabled(running);
     }
 }

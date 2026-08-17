@@ -7,12 +7,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 public class ContainerRuntime {
     public enum Status {STOPPED, RUNNING, CRASHED}
 
     private static final int MAX_BUFFERED_LINES = 5000;
     private static final ContainerRuntime instance = new ContainerRuntime();
+    private static final Pattern ANSI_ESCAPE = Pattern.compile("\\x1B\\[[0-9;?]*[ -/]*[@-~]");
 
     public interface Listener {
         void onLog(String line);
@@ -80,6 +82,8 @@ public class ContainerRuntime {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(currentProcess.getInputStream(), StandardCharsets.UTF_8));
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    line = sanitizeLine(line);
+                    if (line.isEmpty()) continue;
                     synchronized (lock) {
                         logBuffer.add(line);
                         if (logBuffer.size() > MAX_BUFFERED_LINES) logBuffer.remove(0);
@@ -121,7 +125,7 @@ public class ContainerRuntime {
         }
         if (currentProcess == null) return false;
         try {
-            currentProcess.getOutputStream().write((command+"\n").getBytes(StandardCharsets.UTF_8));
+            currentProcess.getOutputStream().write((command+"\r").getBytes(StandardCharsets.UTF_8));
             currentProcess.getOutputStream().flush();
             return true;
         }
@@ -173,5 +177,13 @@ public class ContainerRuntime {
             snapshot = new ArrayList<>(listeners);
         }
         for (Listener listener : snapshot) listener.onStatusChanged(status, exitCode);
+    }
+
+    private static String sanitizeLine(String line) {
+        String result = ANSI_ESCAPE.matcher(line).replaceAll("");
+        result = result.replace("\r", "");
+        int end = result.length();
+        while (end > 0 && Character.isWhitespace(result.charAt(end - 1))) end--;
+        return result.substring(0, end);
     }
 }

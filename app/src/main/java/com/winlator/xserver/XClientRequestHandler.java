@@ -5,6 +5,7 @@ import com.winlator.xconnector.RequestHandler;
 import com.winlator.xconnector.XInputStream;
 import com.winlator.xconnector.XOutputStream;
 import com.winlator.xconnector.XStreamLock;
+import com.winlator.xserver.errors.BadImplementation;
 import com.winlator.xserver.errors.XRequestError;
 import com.winlator.xserver.extensions.Extension;
 import com.winlator.xserver.requests.AtomRequests;
@@ -162,6 +163,7 @@ public class XClientRequestHandler implements RequestHandler {
             if (opcode < 0) {
                 Extension extension = client.xServer.getExtension(opcode);
                 if (extension != null) extension.handleRequest(client, inputStream, outputStream);
+                else throw new BadImplementation();
             }
             else {
                 switch (opcode) {
@@ -418,7 +420,7 @@ public class XClientRequestHandler implements RequestHandler {
                         client.skipRequest();
                         break;
                     default:
-                        throw new UnsupportedOperationException("Unsupported opcode "+opcode+".");
+                        throw new BadImplementation();
                 }
             }
         }
