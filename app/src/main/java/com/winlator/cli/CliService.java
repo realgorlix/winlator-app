@@ -6,7 +6,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -38,7 +40,11 @@ public class CliService extends Service {
 
         @Override
         public void onStatusChanged(ContainerRuntime.Status status, int exitCode) {
-            if (status == ContainerRuntime.Status.RUNNING) return;
+            if (status == ContainerRuntime.Status.RUNNING) {
+                started = true;
+                return;
+            }
+            if (!started) return;
             if (status == ContainerRuntime.Status.CRASHED) {
                 updateNotification(getString(R.string.cli_status_crashed, exitCode));
             }
@@ -48,8 +54,11 @@ public class CliService extends Service {
 
     private XServer xServer;
     private XServerComponent xServerComponent;
+    private PowerManager.WakeLock wakeLock;
+    private WifiManager.WifiLock wifiLock;
     private int containerId;
     private volatile boolean finishing = false;
+    private volatile boolean started = false;
 
     @Override
     public void onCreate() {
@@ -68,7 +77,10 @@ public class CliService extends Service {
         if (ContainerRuntime.getInstance().isRunning()) return START_NOT_STICKY;
 
         finishing = false;
+        started = false;
         containerId = 0;
+        acquireWakeLock();
+        acquireWifiLock();
         startForeground(NOTIFICATION_ID, buildNotification(getString(R.string.cli_status_starting)));
 
         final String execPathArg = intent != null ? intent.getStringExtra("exec_path") : null;
@@ -97,7 +109,41 @@ public class CliService extends Service {
             xServer = null;
         }
         sysVSHMServer.stop();
+        releaseWakeLock();
+        releaseWifiLock();
         stopSelf();
+    }
+
+    private void acquireWakeLock() {
+        if (wakeLock != null && wakeLock.isHeld()) return;
+        PowerManager pm = (PowerManager)getSystemService(POWER_SERVICE);
+        if (pm == null) return;
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WinlatorCLI:container");
+        wakeLock.setReferenceCounted(false);
+        wakeLock.acquire();
+    }
+
+    private void releaseWakeLock() {
+        if (wakeLock != null) {
+            if (wakeLock.isHeld()) wakeLock.release();
+            wakeLock = null;
+        }
+    }
+
+    private void acquireWifiLock() {
+        if (wifiLock != null && wifiLock.isHeld()) return;
+        WifiManager wm = (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
+        if (wm == null) return;
+        wifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "WinlatorCLI:container");
+        wifiLock.setReferenceCounted(false);
+        wifiLock.acquire();
+    }
+
+    private void releaseWifiLock() {
+        if (wifiLock != null) {
+            if (wifiLock.isHeld()) wifiLock.release();
+            wifiLock = null;
+        }
     }
 
     private void run(String execPathArg, int containerIdArg) {

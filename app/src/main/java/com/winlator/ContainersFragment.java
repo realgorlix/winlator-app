@@ -2,8 +2,11 @@ package com.winlator;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -254,12 +257,24 @@ public class ContainersFragment extends Fragment {
                 return;
             }
 
+            ensureBatteryOptimizationExempt(activity);
+
             String execPath = container.getExecPath();
             Intent intent = new Intent(activity, CliService.class);
             intent.putExtra("container_id", container.id);
             intent.putExtra("exec_path", execPath.isEmpty() ? "cmd" : execPath);
             ContextCompat.startForegroundService(activity, intent);
             activity.showFragment(new ContainerConsoleFragment(container.id));
+        }
+
+        private void ensureBatteryOptimizationExempt(MainActivity activity) {
+            PowerManager pm = (PowerManager)activity.getSystemService(Context.POWER_SERVICE);
+            if (pm == null || pm.isIgnoringBatteryOptimizations(activity.getPackageName())) return;
+
+            ContentDialog.confirm(activity, R.string.cli_battery_optimization_message, () -> {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:"+activity.getPackageName()));
+                activity.startActivity(intent);
+            });
         }
 
         private void stopContainer(Container container) {

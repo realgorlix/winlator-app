@@ -367,4 +367,6 @@
     <string name="cli_status_crashed">Crashed (exit code %1$d)</string>
     <string name="cli_error_no_exec_path">No executable path given</string>
     <string name="cli_error_start_failed">Failed to start process</string>
+    <string name="cli_battery_optimization_title">Battery Optimization</string>
+    <string name="cli_battery_optimization_message">For the container to keep running in the background without interruption (even with the screen off), allow this app to run without battery optimization restrictions.</string>
 </resources>
