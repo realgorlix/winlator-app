@@ -2,6 +2,7 @@ package com.winlator.cli;
 
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 
 import com.winlator.container.Container;
 import com.winlator.core.Callback;
@@ -55,16 +56,21 @@ public abstract class CliRunner {
         if (args != null) command.addAll(Arrays.asList(args));
 
         int masterFd = CliPty.openPty(CliPty.DEFAULT_COLS, CliPty.DEFAULT_ROWS);
-        if (masterFd < 0) return null;
+        if (masterFd < 0) {
+            Log.e("CliRunner", "openPty failed");
+            return null;
+        }
 
         String slavePath = CliPty.getSlavePath(masterFd);
         if (slavePath == null) {
+            Log.e("CliRunner", "getSlavePath failed");
             XConnectorEpoll.closeFd(masterFd);
             return null;
         }
 
         java.lang.Process process = ProcessHelper.startWithPty(command.toArray(new String[0]), envVars, workingDir, slavePath, terminationCallback);
         if (process == null) {
+            Log.e("CliRunner", "startWithPty failed for command: "+command);
             XConnectorEpoll.closeFd(masterFd);
             return null;
         }

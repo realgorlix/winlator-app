@@ -146,7 +146,7 @@ public class CliService extends Service {
             updateNotification(getString(R.string.cli_status_running, execPath));
             CliProcess process = CliRunner.run(this, container, execPath, null, container.isDebugEnabled(), null);
             if (process == null || process.process == null) {
-                updateNotification(getString(R.string.cli_error_no_exec_path));
+                updateNotification(getString(R.string.cli_error_start_failed));
                 finish();
                 return;
             }

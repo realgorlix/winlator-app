@@ -2,6 +2,8 @@ package com.winlator.cli;
 
 import android.os.ParcelFileDescriptor;
 
+import com.winlator.core.ProcessHelper;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,6 +14,7 @@ public class CliProcess {
     public final java.lang.Process process;
     public final int masterFd;
     private final ParcelFileDescriptor masterPfd;
+    private final int pid;
     private final InputStream inputStream;
     private final OutputStream outputStream;
 
@@ -19,6 +22,7 @@ public class CliProcess {
         this.process = process;
         this.masterFd = masterFd;
         this.masterPfd = masterPfd;
+        this.pid = ProcessHelper.getProcessPid(process);
         this.inputStream = new FileInputStream(masterPfd.getFileDescriptor());
         this.outputStream = new FileOutputStream(masterPfd.getFileDescriptor());
     }
@@ -36,7 +40,8 @@ public class CliProcess {
     }
 
     public void destroy() {
-        process.destroy();
+        if (pid > 0) ProcessHelper.killProcessTree(pid);
+        else process.destroy();
     }
 
     public void close() {
